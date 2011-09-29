@@ -1,0 +1,72 @@
+--- src/minecraft_server/net/minecraft/src/EntityCreeper.java
++++ src/minecraft_server/net/minecraft/src/EntityCreeper.java
+@@ -129,10 +129,10 @@ public class EntityCreeper extends EntityMob
+             {
+                 if(getPowered())
+                 {
+-                    worldObj.createExplosion(this, posX, posY, posZ, 6F);
++                    worldObj.newExplosion(this, posX, posY, posZ, 6F, false, false);
+                 } else
+                 {
+-                    worldObj.createExplosion(this, posX, posY, posZ, 3F);
++                    worldObj.newExplosion(this, posX, posY, posZ, 3F, false, false);
+                 }
+                 setEntityDead();
+             }
+--- src/minecraft_server/net/minecraft/src/Explosion.java
++++ src/minecraft_server/net/minecraft/src/Explosion.java
+@@ -26,11 +26,17 @@ public class Explosion
+         explosionY = d1;
+         explosionZ = d2;
+     }
+-
++    
+     public void doExplosionA()
+     {
++        doExplosionA(true);
++    }
++    
++    public void doExplosionA(boolean blockDamage)
++    {
+         float f = explosionSize;
+         int i = 16;
++        if(blockDamage)
+         for(int j = 0; j < i; j++)
+         {
+             for(int l = 0; l < i; l++)
+--- src/minecraft_server/net/minecraft/src/World.java
++++ src/minecraft_server/net/minecraft/src/World.java
+@@ -1504,11 +1504,17 @@ public class World
+     }
+ 
+     public Explosion newExplosion(Entity entity, double d, double d1, double d2, 
++    {
++        return newExplosion(entity, d, d1, d2, f, flag, true);
++    }
++    
++    public Explosion newExplosion(Entity entity, double d, double d1, double d2, 
++            float f, boolean flag, boolean blockDamage)
+     {
+         Explosion explosion = new Explosion(this, entity, d, d1, d2, f);
+         explosion.isFlaming = flag;
+-        explosion.doExplosionA();
++        explosion.doExplosionA(blockDamage);
+         explosion.doExplosionB(true);
+         return explosion;
+     }
+--- src/minecraft_server/net/minecraft/src/WorldServer.java
++++ src/minecraft_server/net/minecraft/src/WorldServer.java
+@@ -113,11 +113,11 @@ public class WorldServer extends World
+     }
+ 
+     public Explosion newExplosion(Entity entity, double d, double d1, double d2, 
+-            float f, boolean flag)
++            float f, boolean flag, boolean blockDamage)
+     {
+         Explosion explosion = new Explosion(this, entity, d, d1, d2, f);
+         explosion.isFlaming = flag;
+-        explosion.doExplosionA();
++        explosion.doExplosionA(blockDamage);
+         explosion.doExplosionB(false);
+         mcServer.configManager.sendPacketToPlayersAroundPoint(d, d1, d2, 64D, worldProvider.worldType, new Packet60Explosion(d, d1, d2, f, explosion.destroyedBlockPositions));
+         return explosion;
